@@ -7,7 +7,7 @@ import { ResponseDto } from "src/presentation/dtos/base/ResponseDto.dto";
 import { Constants } from "src/utils/Constants.util";
 import { RelationKeys } from "src/utils/CustomTypes";
 import { RegularExpression } from "src/utils/RegularExpressions.util";
-import { EntityTarget, Repository } from "typeorm";
+import { EntityTarget, FindOneOptions, FindOptionsRelationByString, FindOptionsRelations, FindOptionsSelect, FindOptionsSelectByString, FindOptionsWhere, Repository, SelectQueryBuilder } from "typeorm";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 export class BaseRepository<T> implements IBaseRepository<T> {
@@ -52,18 +52,19 @@ export class BaseRepository<T> implements IBaseRepository<T> {
 
     async add(entity: T): Promise<ResponseDto<T>> {
 
-        try {
+        // try {
 
-            const saveEntity: T = await this.repository.save(entity);
+        //     const saveEntity: T = await this.repository.save(entity);
 
-            if (!saveEntity) return { message: "ups, the entity was not created succesfully.", success: false };
+        //     if (!saveEntity) return { message: "ups, the entity was not created succesfully.", success: false };
 
-            return { message: "Entity created successfully.", success: true };
+        //     return { message: "Entity created successfully.", success: true };
 
-        } catch (error) {
-            throw new InternalServerErrorException(`Error creating data: ${error.message}`);
-        }
+        // } catch (error) {
+        //     throw new InternalServerErrorException(`Error creating data: ${error.message}`);
+        // }
 
+        return await { message: "Entity created successfully.", success: true };
 
     }
     async getAll(page: number, pageSize: number, selectFields?: (keyof T)[], relations?: RelationKeys<T>[]): Promise<PaginatedResponseDto<T>> {
@@ -97,17 +98,17 @@ export class BaseRepository<T> implements IBaseRepository<T> {
         }
     }
 
-    async getById(id: string, selectFields?: (keyof T)[], relations?: RelationKeys<T>[]): Promise<ResponseDto<T>> {
+    async getById(where: FindOptionsWhere<T> | FindOptionsWhere<T>[], select?: FindOptionsSelect<T>, relations?: FindOptionsRelations<T>): Promise<ResponseDto<T>> {
 
-        if (!RegularExpression.UUID.test(id)) throw new BadRequestException(new ResponseDto(false, "Invalid ID format. ID must be a valid UUID.", null));
+        // if (!RegularExpression.UUID.test(id)) throw new BadRequestException(new ResponseDto(false, "Invalid ID format. ID must be a valid UUID.", null));
 
         try {
-
+            
             const entity: T = await this.repository.findOne(
                 {
-                    where: { id } as any,
-                    select: selectFields as (keyof T)[],
-                    relations: relations as string[] || []
+                    where,
+                    select,
+                    relations
                 });
 
             if (!entity) throw new NotFoundException(new ResponseDto(false, "Entity not found successfully.", null));
@@ -119,47 +120,51 @@ export class BaseRepository<T> implements IBaseRepository<T> {
         }
     }
 
-
     async update(id: string, entity: QueryDeepPartialEntity<T>): Promise<ResponseDto<T>> {
 
-        if (!RegularExpression.UUID.test(id)) throw new BadRequestException(new ResponseDto(false, "Invalid ID format. ID must be a valid UUID.", null));
+        // if (!RegularExpression.UUID.test(id)) throw new BadRequestException(new ResponseDto(false, "Invalid ID format. ID must be a valid UUID.", null));
 
-        try {
+        // try {
 
-            const existingEntity = (await this.getById(id)).data;
+        //     const existingEntity = (await this.getById(id)).data;
 
-            if (!existingEntity) throw new NotFoundException(new ResponseDto(false, "Entity not found successfully.", null));
+        //     if (!existingEntity) throw new NotFoundException(new ResponseDto(false, "Entity not found successfully.", null));
 
-            const updateResult = await this.repository.update(id, entity);
+        //     const updateResult = await this.repository.update(id, entity);
 
-            if (updateResult.affected === 0) throw new InternalServerErrorException(new ResponseDto(false, "Failed to update the entity.", null));
+        //     if (updateResult.affected === 0) throw new InternalServerErrorException(new ResponseDto(false, "Failed to update the entity.", null));
 
 
-            const updatedEntity = (await this.getById(id)).data;
+        //     const updatedEntity = (await this.getById(id)).data;
 
-            return new ResponseDto(true, "Entity updated successfully.", updatedEntity);
+        //     return await new ResponseDto(true, "Entity updated successfully.", updatedEntity);
 
-        } catch (error) {
-            throw new InternalServerErrorException(new ResponseDto(false, `Error updating entity: ${error.message}`, null));
-        }
+        // } catch (error) {
+        //     throw new InternalServerErrorException(new ResponseDto(false, `Error updating entity: ${error.message}`, null));
+        // }
+
+        return await new ResponseDto(true, "Entity updated successfully.", null);
+
     }
     async delete(id: string): Promise<DeleteResponseDto> {
-        if (!RegularExpression.UUID.test(id)) throw new BadRequestException(new DeleteResponseDto(false, "Invalid ID format. ID must be a valid UUID."));
+        // if (!RegularExpression.UUID.test(id)) throw new BadRequestException(new DeleteResponseDto(false, "Invalid ID format. ID must be a valid UUID."));
 
-        try {
+        // try {
 
-            const existingEntity = (await this.getById(id)).data;
+        //     const existingEntity = (await this.getById(id)).data;
 
-            if (!existingEntity) throw new NotFoundException(new DeleteResponseDto(false, "Entity not found."));
+        //     if (!existingEntity) throw new NotFoundException(new DeleteResponseDto(false, "Entity not found."));
 
-            const deleteResult = await this.repository.delete(id);
+        //     const deleteResult = await this.repository.delete(id);
 
-            if (deleteResult.affected === 0) throw new InternalServerErrorException(new DeleteResponseDto(false, "Failed to delete the entity."));
+        //     if (deleteResult.affected === 0) throw new InternalServerErrorException(new DeleteResponseDto(false, "Failed to delete the entity."));
 
-            return new DeleteResponseDto(true, "Entity deleted successfully.");
+        //     return await new DeleteResponseDto(true, "Entity deleted successfully.");
 
-        } catch (error) {
-            throw new InternalServerErrorException(new DeleteResponseDto(false, `Error deleting entity: ${error.message}`));
-        }
+        // } catch (error) {
+        //     throw new InternalServerErrorException(new DeleteResponseDto(false, `Error deleting entity: ${error.message}`));
+        // }
+        return await new DeleteResponseDto(true, "Entity deleted successfully.");
+
     }
 }

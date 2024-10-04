@@ -5,7 +5,7 @@ import { Country } from "./Country.entity";
 @Entity('Clientes_Paises')
 export class CountryCustomer {
     @PrimaryColumn('uuid', { name: 'cliente_id' })
-    id: string;
+    clienteId: string;
 
     @PrimaryColumn('uuid', { name: 'pais_id' })
     paisId: string;

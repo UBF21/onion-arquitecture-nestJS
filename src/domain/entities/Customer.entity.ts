@@ -2,6 +2,12 @@ import { Column, Entity, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from
 import { BaseEntity } from "./base/BaseEntity.entity";
 import { CountryCustomer } from "./CountryCustomer.entity";
 
+
+export class Item{
+    id:string;
+    name:string;
+}
+
 @Entity('Clientes')
 export class Customer extends BaseEntity {
     @PrimaryColumn('uuid', { name: "cliente_id" }) // Especifica que es un UNIQUEIDENTIFIER
@@ -12,4 +18,7 @@ export class Customer extends BaseEntity {
 
     @OneToMany(() => CountryCustomer, countryCustomer => countryCustomer.cliente)
     CustomerCountries: CountryCustomer[];
+
+    item:Item;
+
 }
