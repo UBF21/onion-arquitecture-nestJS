@@ -8,17 +8,18 @@ import { Customer } from 'src/domain/entities/Customer.entity';
     imports: [
         TypeOrmModule.forRoot({
             type: "mssql",
-            host: 'efefeeffefefef.database.windows.net',
+            host: 'localhost',
             port: 1433,
-            username: 'felipe',
-            password: '###Rafael1234',
-            database: 'evfbgrretbgrergtbgetbrgf',
-            entities: [Customer,Country,CountryCustomer],
+            username: 'sa',
+            password: 'chichobelo',
+            database: 'general-empresa',
+            entities: [Country,CountryCustomer,Customer],
             synchronize: false,
             logging: true,
             options: {
                 encrypt: true, // Utilizado para conexiones seguras, si tu base de datos requiere SSL.
                 enableArithAbort: true,  // Esto puede ser necesario dependiendo de la versión de SQL Server.
+                trustServerCertificate:true
             }
         })
     ]

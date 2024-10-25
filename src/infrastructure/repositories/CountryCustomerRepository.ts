@@ -1,6 +1,6 @@
 import { CountryCustomer } from "src/domain/entities/CountryCustomer.entity";
 import { BaseRepository } from "./base/BaseRepository";
-import { ICountryCustomerRepository } from "src/domain/repositories/ICountryCustomerRepository";
+import { ICountryCustomerRepository } from "src/domain/repositories/entities/ICountryCustomerRepository";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 

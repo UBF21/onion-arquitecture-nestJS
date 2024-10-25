@@ -1,13 +1,12 @@
 import { BadRequestException, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { Customer } from "src/domain/entities/Customer.entity";
 import { IBaseRepository } from "src/domain/repositories/base/IBaseRepository";
-import { DeleteResponseDto } from "src/presentation/dtos/base/DeleteResponseDto.dto";
-import { PaginatedResponseDto } from "src/presentation/dtos/base/PaginatedResponseDto.dto";
-import { ResponseDto } from "src/presentation/dtos/base/ResponseDto.dto";
+import { DeleteResponseDto } from "src/application/dtos/base/delete-response.dto";
+import { PaginatedResponseDto } from "src/application/dtos/base/paginated-response.dto";
+import { ResponseDto } from "src/application/dtos/base/response.dto";
 import { Constants } from "src/utils/Constants.util";
-import { RelationKeys } from "src/utils/CustomTypes";
 import { RegularExpression } from "src/utils/RegularExpressions.util";
-import { EntityTarget, FindOneOptions, FindOptionsRelationByString, FindOptionsRelations, FindOptionsSelect, FindOptionsSelectByString, FindOptionsWhere, Repository, SelectQueryBuilder } from "typeorm";
+import { EntityTarget, FindOneOptions, FindOptionsRelations, FindOptionsSelect, FindOptionsWhere, Repository, SelectQueryBuilder } from "typeorm";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 export class BaseRepository<T> implements IBaseRepository<T> {
@@ -20,7 +19,7 @@ export class BaseRepository<T> implements IBaseRepository<T> {
         this.repository = repository;
     }
 
-    async getAllByFieldName(fieldName: keyof T, value: any, page: number, pageSize: number, selectFields?: (keyof T)[], relations?: RelationKeys<T>[]): Promise<PaginatedResponseDto<T>> {
+    async getAllByFieldName(fieldName: keyof T, value: any, page: number, pageSize: number, select?: FindOptionsSelect<T>, relations?: FindOptionsRelations<T>): Promise<{ data: T[]; totalItems: number; currentPage: number; pageSize: number }> {
 
         if (page <= 0 || isNaN(page)) throw new BadRequestException('Invalid page number. Page number must be a positive integer.');
 
@@ -35,8 +34,8 @@ export class BaseRepository<T> implements IBaseRepository<T> {
                     where: { [fieldName]: value } as any,
                     skip: (page - 1) * pageSize,
                     take: pageSize,
-                    select: selectFields as (keyof T)[],
-                    relations: relations as string[] || []
+                    select,
+                    relations
                 }
             );
             const totalPages = Math.ceil(totalItems / pageSize);
@@ -50,24 +49,17 @@ export class BaseRepository<T> implements IBaseRepository<T> {
 
     }
 
-    async add(entity: T): Promise<ResponseDto<T>> {
-
-        // try {
-
-        //     const saveEntity: T = await this.repository.save(entity);
-
-        //     if (!saveEntity) return { message: "ups, the entity was not created succesfully.", success: false };
-
-        //     return { message: "Entity created successfully.", success: true };
-
-        // } catch (error) {
-        //     throw new InternalServerErrorException(`Error creating data: ${error.message}`);
-        // }
-
-        return await { message: "Entity created successfully.", success: true };
-
+    async add(entity: T): Promise<T> {
+        try {
+            const saveEntity: T = await this.repository.save(entity);
+            if (!saveEntity) throw new InternalServerErrorException(`ups, the entity was not created succesfully.`);
+            return saveEntity;
+        } catch (error) {
+            throw new InternalServerErrorException(`Error creating data: ${error.message}`);
+        }
     }
-    async getAll(page: number, pageSize: number, selectFields?: (keyof T)[], relations?: RelationKeys<T>[]): Promise<PaginatedResponseDto<T>> {
+
+    async getAll(page: number, pageSize: number, where?: FindOptionsWhere<T>, select?: FindOptionsSelect<T>, relations?: FindOptionsRelations<T>): Promise<{ data: T[]; totalItems: number; currentPage: number; pageSize: number }> {
 
         if (page <= 0 || isNaN(page)) throw new BadRequestException('Invalid page number. Page number must be a positive integer.');
 
@@ -82,9 +74,9 @@ export class BaseRepository<T> implements IBaseRepository<T> {
                 {
                     skip: (page - 1) * pageSize,
                     take: pageSize,
-                    select: selectFields as (keyof T)[],
-                    relations: relations as string[] || []
-
+                    where,
+                    select,
+                    relations
                 });
 
             const totalPages = Math.ceil(totalItems / pageSize);
@@ -98,73 +90,58 @@ export class BaseRepository<T> implements IBaseRepository<T> {
         }
     }
 
-    async getById(where: FindOptionsWhere<T> | FindOptionsWhere<T>[], select?: FindOptionsSelect<T>, relations?: FindOptionsRelations<T>): Promise<ResponseDto<T>> {
+    async getById(id: string, select?: FindOptionsSelect<T>, relations?: FindOptionsRelations<T>): Promise<T> {
 
-        // if (!RegularExpression.UUID.test(id)) throw new BadRequestException(new ResponseDto(false, "Invalid ID format. ID must be a valid UUID.", null));
+        if (!RegularExpression.UUID.test(id)) throw new BadRequestException(new ResponseDto(false, "Invalid ID format. ID must be a valid UUID.", null));
 
         try {
-            
+
             const entity: T = await this.repository.findOne(
                 {
-                    where,
+                    where: { id } as any,
                     select,
                     relations
                 });
 
             if (!entity) throw new NotFoundException(new ResponseDto(false, "Entity not found successfully.", null));
 
-            return { success: true, message: "Entity found successfully.", data: entity };
+            return entity;
 
         } catch (error) {
             throw new InternalServerErrorException(new ResponseDto(false, `Error retrieving entity: ${error.message}`, null));
         }
     }
 
-    async update(id: string, entity: QueryDeepPartialEntity<T>): Promise<ResponseDto<T>> {
-
-        // if (!RegularExpression.UUID.test(id)) throw new BadRequestException(new ResponseDto(false, "Invalid ID format. ID must be a valid UUID.", null));
-
-        // try {
-
-        //     const existingEntity = (await this.getById(id)).data;
-
-        //     if (!existingEntity) throw new NotFoundException(new ResponseDto(false, "Entity not found successfully.", null));
-
-        //     const updateResult = await this.repository.update(id, entity);
-
-        //     if (updateResult.affected === 0) throw new InternalServerErrorException(new ResponseDto(false, "Failed to update the entity.", null));
+    async update(id: string, entity: QueryDeepPartialEntity<T>): Promise<T> {
 
 
-        //     const updatedEntity = (await this.getById(id)).data;
+        try {
 
-        //     return await new ResponseDto(true, "Entity updated successfully.", updatedEntity);
+            const updateResult = await this.repository.update(id, entity);
 
-        // } catch (error) {
-        //     throw new InternalServerErrorException(new ResponseDto(false, `Error updating entity: ${error.message}`, null));
-        // }
+            if (updateResult.affected === 0) throw new InternalServerErrorException(new ResponseDto(false, "Failed to update the entity.", null));
 
-        return await new ResponseDto(true, "Entity updated successfully.", null);
+            const updatedEntity: T = await this.getById(id);
+
+            return await updatedEntity;
+
+        } catch (error) {
+            throw new InternalServerErrorException(new ResponseDto(false, `Error updating entity: ${error.message}`, null));
+        }
+
 
     }
-    async delete(id: string): Promise<DeleteResponseDto> {
-        // if (!RegularExpression.UUID.test(id)) throw new BadRequestException(new DeleteResponseDto(false, "Invalid ID format. ID must be a valid UUID."));
 
-        // try {
+    async delete(id: string): Promise<boolean> {
 
-        //     const existingEntity = (await this.getById(id)).data;
+        if (!RegularExpression.UUID.test(id)) throw new BadRequestException(new DeleteResponseDto(false, "Invalid ID format. ID must be a valid UUID."));
 
-        //     if (!existingEntity) throw new NotFoundException(new DeleteResponseDto(false, "Entity not found."));
+        try {
+            const deleteResult = await this.repository.delete(id);
+            return (deleteResult.affected > 0)
 
-        //     const deleteResult = await this.repository.delete(id);
-
-        //     if (deleteResult.affected === 0) throw new InternalServerErrorException(new DeleteResponseDto(false, "Failed to delete the entity."));
-
-        //     return await new DeleteResponseDto(true, "Entity deleted successfully.");
-
-        // } catch (error) {
-        //     throw new InternalServerErrorException(new DeleteResponseDto(false, `Error deleting entity: ${error.message}`));
-        // }
-        return await new DeleteResponseDto(true, "Entity deleted successfully.");
-
+        } catch (error) {
+            throw new InternalServerErrorException(new DeleteResponseDto(false, `Error deleting entity: ${error.message}`));
+        }
     }
 }
