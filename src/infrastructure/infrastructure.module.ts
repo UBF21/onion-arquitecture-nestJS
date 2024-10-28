@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from './database/database.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CustomerRepository } from './repositories/CustomerRepository';
+import { CustomerRepository } from './repositories/entities/CustomerRepository';
 import { Customer } from 'src/domain/entities/Customer.entity';
 import { Country } from 'src/domain/entities/Country.entity';
 import { CountryCustomer } from 'src/domain/entities/CountryCustomer.entity';
-import { CountryCustomerRepository } from './repositories/CountryCustomerRepository';
+import { CountryCustomerRepository } from './repositories/entities/CountryCustomerRepository';
 
 @Module({
   imports: [

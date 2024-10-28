@@ -1,6 +1,6 @@
 import { BadRequestException, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { Customer } from "src/domain/entities/Customer.entity";
-import { IBaseRepository } from "src/domain/repositories/base/IBaseRepository";
+import { IBaseRepository } from "src/application/repositories/base/IBaseRepository";
 import { DeleteResponseDto } from "src/application/dtos/base/delete-response.dto";
 import { ResponseDto } from "src/application/dtos/base/response.dto";
 import { Constants } from "src/utils/Constants.util";
