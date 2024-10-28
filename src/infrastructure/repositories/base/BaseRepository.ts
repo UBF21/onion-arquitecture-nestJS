@@ -2,11 +2,10 @@ import { BadRequestException, InternalServerErrorException, NotFoundException } 
 import { Customer } from "src/domain/entities/Customer.entity";
 import { IBaseRepository } from "src/domain/repositories/base/IBaseRepository";
 import { DeleteResponseDto } from "src/application/dtos/base/delete-response.dto";
-import { PaginatedResponseDto } from "src/application/dtos/base/paginated-response.dto";
 import { ResponseDto } from "src/application/dtos/base/response.dto";
 import { Constants } from "src/utils/Constants.util";
 import { RegularExpression } from "src/utils/RegularExpressions.util";
-import { EntityTarget, FindOneOptions, FindOptionsRelations, FindOptionsSelect, FindOptionsWhere, Repository, SelectQueryBuilder } from "typeorm";
+import { EntityTarget, FindOptionsRelations, FindOptionsSelect, FindOptionsWhere, Repository, SelectQueryBuilder } from "typeorm";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 export class BaseRepository<T> implements IBaseRepository<T> {
@@ -17,6 +16,22 @@ export class BaseRepository<T> implements IBaseRepository<T> {
     constructor(entity: EntityTarget<T>, repository: Repository<T>) {
         this.entity = entity;
         this.repository = repository;
+    }
+    async getCount(where?: FindOptionsWhere<T>, relations?: FindOptionsRelations<T>) {
+        try {
+            const total: number = await this.repository.count({ where, relations });
+            return total;
+        } catch (error) {
+            throw new InternalServerErrorException(`Error count data : ${error.message}`);
+        }
+    }
+    async getAllBy(where: FindOptionsWhere<T>, select?: FindOptionsSelect<T>, relations?: FindOptionsRelations<T>): Promise<T[]> {
+        try {
+            const data: T[] = await this.repository.find({ where, select, relations });
+            return data ?? [];
+        } catch (error) {
+            throw new InternalServerErrorException(`Error find data : ${error.message}`);
+        }
     }
 
     async getAllByFieldName(fieldName: keyof T, value: any, page: number, pageSize: number, select?: FindOptionsSelect<T>, relations?: FindOptionsRelations<T>): Promise<{ data: T[]; totalItems: number; currentPage: number; pageSize: number }> {

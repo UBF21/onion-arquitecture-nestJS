@@ -6,6 +6,5 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   await app.listen(3000);
-  log(join(__dirname, 'domain',"entities", "**",'*.entity{.ts,.js}'));
 }
 bootstrap();
